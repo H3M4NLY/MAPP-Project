@@ -1,11 +1,3 @@
-// LCDKeypad.cpp
-// Program to test LCD.
-// The LCD display with two lines, 20 characters each.
-// PORT A1: PA_15 : PA_8
-// There are three control lines (PA_14:PA_12) and four data lines (PA_11 : PA_8).
-// PA_14 - RS=0 Data represents Command, RS=1 Data represents Character
-// PA_13 - RW=0 Writing into the LCD module
-// PA_12 - E =1 Data is latched into LCD module during low to hight transition  
 #include <cstdio>
 #undef __ARM_FP
 
@@ -19,12 +11,12 @@ AnalogIn moistureSensor1(PA_0);
 AnalogIn moistureSensor2(PA_1);
 
 DigitalOut waterPump(PA_5);
-PwmOut servoMotor1(PA_6);
-PwmOut servoMotor2(PA_7);
+PwmOut Motor1(PA_6);
+PwmOut Motor2(PA_7);
 //Declare the GPIO pins for the Switch as DigitalIn type
 
-BusOut leds(PB_14);  
-BusOut led2(PB_15);
+BusOut leds(PB_0);  
+BusOut led2(PB_1);
 
 PortOut displayBarPort(PortC, DISPLAY_BAR_MASK);
 
@@ -32,12 +24,12 @@ PortOut displayBarPort(PortC, DISPLAY_BAR_MASK);
 
 
 unsigned char key, outChar;
-/*unsigned char status[] = {1, 2, 3};*/
 unsigned char status = '0';
 char Message1 [ ] = "Status:             ";
-char Message2 [ ] = "YOU PRESSED ONE     ";	  // Defining a 20 char string
-char Message3 [ ] = "FUCKING TWO         ";
-char Message4 [ ] = "AINT AVAILABLE MOFO!";
+char Message2 [ ] = "Mode 1              ";	  
+char Message3 [ ] = "Mode 2              ";	  
+char Message4 [ ] = "Invalid. Loser.     ";  
+Ticker pumpTicker;
 
 char bruh;
 // Function to read moisture sensor values
@@ -51,24 +43,33 @@ void control_water_pump(bool turn_on) {
     printf("Pump should work. \n");
 }
 
+void toggle_water_pump() {
+    static bool pump_state = false;
+    pump_state = !pump_state;
+    control_water_pump(pump_state);
+    printf("idk");
+}
+
 // Function to set the angle of the first servo motor
-void set_servo1_angle(float angle) {
+void set_servo1_time(float time) {
     // Assuming the servo motor operates between 0.5ms (0 degrees) and 2.5ms (180 degrees)
-    float pulse_width = 0.001 + (angle / 180.0) * 0.002; // Calculate pulse width
-    servoMotor1.pulsewidth(pulse_width); // Set the pulse width
+    float period = 0.01;
+    Motor1.period(period);
+    Motor1.write(time);
+    printf("should work");
 }
 
 // Function to set the angle of the second servo motor
-void set_servo2_angle(float angle) {
-    // Assuming the servo motor operates between 0.5ms (0 degrees) and 2.5ms (180 degrees)
-    float pulse_width = 0.001 + (angle / 180.0) * 0.002; // Calculate pulse width
-    servoMotor2.pulsewidth(pulse_width); // Set the pulse width
+void set_servo2_time(float time) {
+    float period = 0.01;
+    Motor1.period(period);
+    Motor1.write(time);
+    printf("should work");
 }
 
 // ---- Main Program ---------------------------------------------------------------
 int main( )
 {
-	printf("This is MAPP LCDKeypad running on Mbed OS %d.%d.%d.\n", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
 	int i;
 	lcd_init();	
@@ -79,7 +80,7 @@ int main( )
         outChar = Message1[i];
         lcd_write_data(outChar); // write character data to LCD
     }  
-    while(1)
+    while(true)
         {
             status = getkey();
             //display the PIN keyed in on LCD
@@ -105,7 +106,7 @@ int main( )
                     thread_sleep_for(50);
                 }
                 bruh = 1;
-                control_water_pump(true);
+                set_servo1_time(3.5);
             
             }
             else if (status == '2')
@@ -118,7 +119,6 @@ int main( )
                     
                 }
                 bruh = 2;
-                control_water_pump(false);
                 
                     
             }
@@ -133,14 +133,26 @@ int main( )
                 bruh = 3;
             }
             if (bruh == 1){
-                leds = 1;
-                led2 = 1;
+                pumpTicker.attach(&toggle_water_pump, 5.0);
             }
 
             if (bruh == 2){
-                leds = 0;
-                led2 = 0;
+                pumpTicker.attach(&toggle_water_pump, 10.0);
             }
-        }
+
+            if (sensor1_value <= 0.6){
+                leds = 1;
+                led2 = 0;
+                set_servo1_time(3.5);
+                set_servo2_time(3.5);
+                }
+            else 
+            {
+                leds = 0;
+                led2 = 1;
+                set_servo1_time(0);
+                set_servo2_time(0);
+            }
+        }
+
 }
-        
