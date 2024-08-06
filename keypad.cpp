@@ -47,24 +47,24 @@ void toggle_water_pump() {
     static bool pump_state = false;
     pump_state = !pump_state;
     control_water_pump(pump_state);
-    printf("idk");
+    printf("idk \n");
 }
 
 // Function to set the angle of the first servo motor
 void set_servo1_time(float time) {
     // Assuming the servo motor operates between 0.5ms (0 degrees) and 2.5ms (180 degrees)
-    float period = 0.01;
-    Motor1.period(period);
-    Motor1.write(time);
-    printf("should work");
+    Motor1.period(0.000000001);
+    Motor1.write(0.3f);
+    thread_sleep_for(time);
+    printf("should work \n");
 }
 
 // Function to set the angle of the second servo motor
 void set_servo2_time(float time) {
-    float period = 0.01;
+    float period = 1;
     Motor1.period(period);
     Motor1.write(time);
-    printf("should work");
+    printf("should work \n");
 }
 
 // ---- Main Program ---------------------------------------------------------------
@@ -106,7 +106,8 @@ int main( )
                     thread_sleep_for(50);
                 }
                 bruh = 1;
-                set_servo1_time(3.5);
+                set_servo1_time(4000);
+
             
             }
             else if (status == '2')
@@ -133,26 +134,25 @@ int main( )
                 bruh = 3;
             }
             if (bruh == 1){
-                pumpTicker.attach(&toggle_water_pump, 5.0);
+                pumpTicker.attach(&toggle_water_pump, 5000ms);
             }
 
             if (bruh == 2){
-                pumpTicker.attach(&toggle_water_pump, 10.0);
+                pumpTicker.attach(&toggle_water_pump, 10000ms);
             }
 
             if (sensor1_value <= 0.6){
                 leds = 1;
                 led2 = 0;
-                set_servo1_time(3.5);
-                set_servo2_time(3.5);
-                }
+                set_servo1_time(0.75);
+                set_servo2_time(0.75);
+             }
             else 
             {
                 leds = 0;
                 led2 = 1;
                 set_servo1_time(0);
                 set_servo2_time(0);
-            }
-        }
-
 }
+}
+}   
