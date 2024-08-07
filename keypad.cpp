@@ -9,14 +9,12 @@
 
 AnalogIn moistureSensor(PA_0);
 
-
 DigitalOut waterPump(PA_5);
 PwmOut Motor1(PA_6);
 PwmOut Motor2(PA_7);
 //Declare the GPIO pins for the Switch as DigitalIn type
 
-BusOut leds(PB_0);  
-BusOut led2(PB_1);
+
 
 PortOut displayBarPort(PortC, DISPLAY_BAR_MASK);
 
@@ -48,15 +46,15 @@ void toggle_water_pump() {
 
 // Function to set the first servo motor forward
 void set_servo1_forward() {
-    Motor1.period(0.01f);   // 20ms period (standard for servos)
-    Motor1.write(0.40f);    // 10% duty cycle (forward position)
+    Motor1.period(0.02f);   // 20ms period (standard for servos)
+    Motor1.write(0.10f);    // 10% duty cycle (forward position)
     printf("Servo 1 set to forward position\n");
 }
 
 // Function to set the first servo motor backward
 void set_servo1_backward() {
-    Motor1.period(0.01f);   // 20ms period (standard for servos)
-    Motor1.write(0.20f);    // 5% duty cycle (backward position)
+    Motor1.period(0.02f);   // 20ms period (standard for servos)
+    Motor1.write(0.05f);    // 5% duty cycle (backward position)
     printf("Servo 1 set to backward position\n");
 }
 
@@ -72,6 +70,12 @@ void set_servo2_backward() {
     Motor2.period(0.02f);   // 20ms period (standard for servos)
     Motor2.write(0.05f);    // 5% duty cycle (backward position)
     printf("Servo 2 set to backward position\n");
+}
+
+void stop_servo1() {
+    Motor1.period(0.01f);
+    Motor1.write(0.00f);   // 7.5% duty cycle (neutral position)
+    printf("Servo 1 stopped\n");
 }
 
 // ---- Main Program ---------------------------------------------------------------
@@ -91,7 +95,8 @@ int main( )
         lcd_write_data(outChar); // write character data to LCD
     }  
     while(true)
-        {
+        { 
+            
             Timer timer;
             status = getkey();
             //display the PIN keyed in on LCD
@@ -100,7 +105,6 @@ int main( )
             lcd_write_cmd(0xC0); // Move cursor to line 2 position 1
 
             moistureValue = moistureSensor.read();
-            printf("Moisture: %.2f%%\n", moistureValue);
             float moisturePercentage = moistureValue * 100.0;
             printf("Moisture: %.2f%%\n", moisturePercentage);
 
@@ -120,16 +124,27 @@ int main( )
                 }
                 bruh = 1;
                 timer.start();
-                while(timer.read()<= 4)
-                    set_servo1_forward();
-
                 
-                if (timer.read() == 4){
-                        timer.stop();
- 
+                // Wait for 4 seconds
+                while(timer.read() <= 2) {
+                    set_servo1_forward(); // Sleep to avoid busy-waiting
                 }
+                
+                // Stop the servo
+                stop_servo1();
+                thread_sleep_for(2000);
+                
+                timer.stop();
+                timer.reset();
+                timer.start();
+               
+                while(timer.read()<= 2){
+                    set_servo1_backward();
+
+                }
+                timer.stop();
                 timer.reset();
-    
+                stop_servo1();
 
             
             }
@@ -142,10 +157,12 @@ int main( )
                     thread_sleep_for(50);
                     
                 }
-                 timer.start();
-                bruh = 2;
                 
-                    
+                bruh = 2;
+                moistureValue = moistureSensor.read();
+                float moisturePercentage = moistureValue * 100.0;
+                printf("Moisture: %.2f%%\n", moisturePercentage);
+      
             }
             else 
             {
@@ -165,32 +182,30 @@ int main( )
                 pumpTicker.attach(&toggle_water_pump, 10000ms);
             }
 
-            if (no == 1){
-                leds = 0;
-                led2 = 1;
+            if (moisturePercentage >= 50){
+                timer.start();
                  while(timer.read()<= 2){
                     set_servo1_forward();
-                    set_servo2_forward();
+
                  }
                 timer.stop();
                 if (timer.read()>2){
-                    Motor1.suspend();
-                    Motor2.suspend();
+                    stop_servo1();
+                    
                 }
                 timer.reset();
              }
-            else if (no == 2)
+            else
             {
-                leds = 0;
-                led2 = 1;
+                timer.start();
                 while(timer.read()<= 2){
                     set_servo1_backward();
-                    set_servo2_backward();
+     
                 }
                 timer.stop();
                 if (timer.read()>2){
-                    Motor1.suspend();
-                    Motor2.suspend();
+                   stop_servo1();
+
                 }
                 timer.reset();
             }
