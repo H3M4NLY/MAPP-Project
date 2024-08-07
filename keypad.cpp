@@ -31,6 +31,7 @@ char Message4 [ ] = "Invalid. Loser.     ";
 Ticker pumpTicker;
 Ticker moistureTicker;
 Ticker readMoistureTicker;
+Ticker bruhTicker;
 Timer timer;
 
 char bruh;
@@ -136,6 +137,23 @@ void check_moisture(){
             }
 }
 
+void check_bruh()
+{   
+    printf("Checking bruh: %d\n", bruh);
+    if (bruh == 1)
+    {
+        pumpTicker.attach(&toggle_water_pump, 5000ms);
+    }
+    else if (bruh == 2)
+    {
+        pumpTicker.attach(&toggle_water_pump, 10000ms);
+    }
+    else if (bruh == 3)
+    {
+        pumpTicker.detach();
+    }
+}
+
 
 // ---- Main Program ---------------------------------------------------------------
 int main( )
@@ -147,10 +165,8 @@ int main( )
 
     moistureTicker.attach(&read_moisture_sensor, 5000ms);
     readMoistureTicker.attach(&check_moisture, 5000ms);
+    bruhTicker.attach(&check_bruh, 2500ms);
 
-    
-    
-    
     char status;					// Initialise LCD module
     lcd_write_cmd(0x80); // Move cursor to line 1 position 1
     for (i = 0; i < 20; i++) //for 20 char LCD module
@@ -158,6 +174,7 @@ int main( )
         outChar = Message1[i];
         lcd_write_data(outChar); // write character data to LCD
     }  
+
     while(true)
         {
             status = getkey();
@@ -203,7 +220,7 @@ int main( )
                 }
                 timer.reset();    
     
-
+            bruh = 1;
             
             }
             else if (status == '2')
@@ -215,18 +232,7 @@ int main( )
                     thread_sleep_for(50);
                     
                 }
-                while(timer.read()<= 4){
-                    set_servo1_backward();
-                }
-                timer.stop();
-                if (timer.read()>4){
-                    Motor1.suspend();
-                }
-                timer.reset();
-                 timer.start();
-                bruh = 2;
-                
-                    
+                bruh = 2;   
             }
             else 
             {
@@ -239,12 +245,5 @@ int main( )
                 bruh = 3;
             }
         }
-        if (bruh == 1){
-            pumpTicker.attach(&toggle_water_pump, 5000ms);
-        }
-
-        if (bruh == 2){
-            pumpTicker.attach(&toggle_water_pump, 10000ms);
-        }
-        
 }
+    
